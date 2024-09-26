@@ -3,24 +3,34 @@ use strict;
 use warnings;
 
 
-my @vector = 0..2;
-# @vector = map { $_ + 0.1} @vector;
 
-my @list = 0..2;
+#生成随机数组
+my @randList = random_array(15, 10);  # 生成长度为5，范围[-10, 10]的随机数组
+psList(\@randList);
 
-print join(", ", @vector), "\n";
-print join(", ", @list), "\n";
+#返回能量和梯度测试
+my ($energy_mid, @gr_mid) = get_EngAndGrad(\@randList);
+print 'energy:', $energy_mid, ', gr:', "\n";
 
-my ($dis, $pid) = distence(\@vector,\@list);
-print $dis**2, ', ', $pid,"\n";
+psList(\@gr_mid);
 
-my $first = (distence(\@vector,\@list))[0];
-print $first**2,"\n";
+sub get_EngAndGrad{#(points_list)
+    my ($plist_f) = @_;
+    my $length = scalar @$plist_f;  # 获取数组长度
+    my @result = random_array($length, 3);
 
+    return (rand()*10,@result);
+}
 
-#三个一行进行打印
-for (my $i = 0; $i < @points_List; $i += 3) {
-    print join(" ", @points_List[$i .. $i + 2]), "\n"# if $i + 2 < @points_List;
+sub random_array {
+    my ($length, $range) = @_;
+    my @random_array;
+
+    for (my $i = 0; $i < $length; $i++) {
+        push @random_array, (2* rand()-1)* $range;
+    }
+
+    return @random_array;
 }
 
 
@@ -53,7 +63,14 @@ sub distence {#(vector,pList)
     return ($mid_dis, $pointi_f);  # 返回多个值
 }
 
+sub psList {
+    my ($array_ref) = @_;
+    my @array_f = @$array_ref;
 
+    for (my $i = 0; $i < @array_f; $i += 3) {
+        print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
+    }
+}
 
 sub norm {  # (array)
     my ($array_ref) = @_;

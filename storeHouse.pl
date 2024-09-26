@@ -1,6 +1,25 @@
 #不再需要的样例代码
 
+##测试检测最近原子
+my @vector = 0..2;
+# @vector = map { $_ + 0.1} @vector;
 
+my @list = 0..11;
+
+print join(", ", @vector), "\n";
+print join(", ", @list), "\n";
+
+my ($dis, $pid) = distence(\@vector,\@list);
+print $dis**2, ', ', $pid,"\n";
+
+my $first = (distence(\@vector,\@list))[0];
+print $first**2,"\n";
+
+
+##三个一行进行打印
+for (my $i = 0; $i < @points_List; $i += 3) {
+    print join(" ", @points_List[$i .. $i + 2]), "\n"# if $i + 2 < @points_List;
+}
 
 ###数组相加 相乘 模长
 # 示例用法

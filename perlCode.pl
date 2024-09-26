@@ -28,6 +28,9 @@ for my $i(1..$points_Num-1){
     push @points_List, @random_point;
 }
 
+p3List(\@points_List);
+
+
 
 
 
@@ -68,9 +71,9 @@ sub distence {#(vector,pList)
 
 sub norm {
     my ($array_ref) = @_;
-    my $result = 0;
-
     my @array_f = @$array_ref;
+
+    my $result = 0;
 
     for my $num (@array_f) {
         $result += $num**2;
@@ -80,30 +83,50 @@ sub norm {
 }
 
 sub add {
-    my ($arr1_ref, $arr2_ref) = @_;
-    my $result = 0;
-
+    my ($arr1_ref, $arr2_ref,$control_f) = @_;
     my @arr1_f = @$arr1_ref;
     my @arr2_f = @$arr2_ref;
 
+    my @result;
+
     for my $i (0 .. $#arr1_f) {
-        $result += $arr1_f[$i] + $arr2_f[$i];
+        $result[$i] = $arr1_f[$i] + $arr2_f[$i]* (-1)**$control_f;
     }
 
-    return $result;
+    return @result;
 }
 
 sub dot {
     my ($arr1_ref, $arr2_ref) = @_;
-    my $result = 0;
-
     my @arr1_f = @$arr1_ref;
     my @arr2_f = @$arr2_ref;
+
+    my $result = 0;
 
     for my $i (0 .. $#arr1_f) {
         $result += $arr1_f[$i] * $arr2_f[$i];
     }
 
     return $result;
+}
+
+sub random_array {
+    my ($length, $range) = @_;
+    my @random_array;
+
+    for (my $i = 0; $i < $length; $i++) {
+        push @random_array, (2* rand()-1)* $range;
+    }
+
+    return @random_array;
+}
+
+sub psList {
+    my ($array_ref) = @_;
+    my @array_f = @$array_ref;
+
+    for (my $i = 0; $i < @array_f; $i += 3) {
+        print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
+    }
 }
 
