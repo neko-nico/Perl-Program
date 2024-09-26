@@ -5,14 +5,34 @@ use warnings;
 
 
 #生成随机数组
-my @randList = random_array(15, 10);  # 生成长度为5，范围[-10, 10]的随机数组
+my @randList = random_array(5, 10);  # 生成长度为5，范围[-10, 10]的随机数组
 psList(\@randList);
+
+my $norm = norm(\@randList);
+print 'norm:', $norm**2,"\n";  # 输出: 1 4 9 = 14
 
 #返回能量和梯度测试
 my ($energy_mid, @gr_mid) = get_EngAndGrad(\@randList);
 print 'energy:', $energy_mid, ', gr:', "\n";
-
 psList(\@gr_mid);
+
+
+##数组的数组，储存和取用方式
+my @original = (0, 1, 2);
+my @arrays_copies;
+
+# 假设我们已经存储了一些数组
+push @arrays_copies, [ @original ];
+push @arrays_copies, [1, 2, 3];   # 第 0 个数组
+push @arrays_copies, [4, 5, 6];   # 第 1 个数组
+push @arrays_copies, [7, 8, 9];   # 第 2 个数组
+
+my $i = 0;  # 取出第 1 个数组
+my @array = @{ $arrays_copies[$i] };  # 解引用并赋值给 @array
+
+print "@array\n";  # 输出: 4 5 6
+
+
 
 sub get_EngAndGrad{#(points_list)
     my ($plist_f) = @_;

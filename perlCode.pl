@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-my $points_Num = 100;
+my $points_Num = 4;
 my $r_equ = 1.5;
 
 my $iniRange = 0.8 * $r_equ * $points_Num **(1/3);
@@ -28,13 +28,82 @@ for my $i(1..$points_Num-1){
     push @points_List, @random_point;
 }
 
-p3List(\@points_List);
+# psList(\@points_List);
+
+my ($energy_mid, @gr_mid) = get_EngAndGrad(\@points_List);
+print "energy:\n", $energy_mid, ",\ngr:\n";
+psList(\@gr_mid);
+
+my $energy = $energy_mid;
+my @gr = - @gr_mid;
+my @dr = map { -$_ } @gr_mid;
+#print 'gr_mid:', scalar(@gr_mid), ', dr:',scalar(@dr),"\n";
+
+my $k = 0;
+my $t = 1;
+my @glist;
+push @glist, [ @gr ];
+my @dlist;
+push @dlist, [ @dr ];
+my @elist = ($energy);
+
+my $h = norm(\@gr)/1000;
+print 'first step:', $h, ".\n";
+my @hlist = ($h);
+my @section = (0);
+my $nantest = 0;
+my $maxMove = 0.1;
+
+my $a_param = 0;
+my $b_param = 0;
+my $change = 0;
+my $accu = 0.1;
+my $ss = 0;
+my $zz = 0;
+my $ww = 0;
+
+my $times = 0;
+my $timeTotal = 0;
+#my $notimes = 0;
+
+my ($t1,$f1,$g1,$limit);
+
+while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
+    $times ++;
+    print "point:",$times,"\n";
+
+    $t1 = 0;
+    ($energy_mid, @gr_mid) = get_EngAndGrad(\@points_List);
+    $f1 = $energy_mid;
+
+    $g1 = - dot(\@gr_mid,\@dr);
+    printf("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
+
+    $limit = 0;
+
+
+}
 
 
 
+sub get_EngAndGrad{#(points_list)
+    my ($plist_f) = @_;
+    my $length = scalar @$plist_f;  # 获取数组长度
+    my @result = random_array($length, 3);
 
+    return (rand()*10,@result);
+}
 
+sub random_array {
+    my ($length, $range) = @_;
+    my @random_array;
 
+    for (my $i = 0; $i < $length; $i++) {
+        push @random_array, (2* rand()-1)* $range;
+    }
+
+    return @random_array;
+}
 
 
 
