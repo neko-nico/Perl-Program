@@ -18,19 +18,55 @@ psList(\@gr_mid);
 
 
 ##数组的数组，储存和取用方式
-my @original = (0, 1, 2);
+my @original = (0, 1, 2);   # 第 0 个数组
 my @arrays_copies;
 
 # 假设我们已经存储了一些数组
 push @arrays_copies, [ @original ];
-push @arrays_copies, [1, 2, 3];   # 第 0 个数组
-push @arrays_copies, [4, 5, 6];   # 第 1 个数组
-push @arrays_copies, [7, 8, 9];   # 第 2 个数组
+push @arrays_copies, [1, 2, 3];   # 第 1 个数组
+push @arrays_copies, [4, 5, 6];   # 第 2 个数组
+push @arrays_copies, [7, 8, 9];   # 第 3 个数组
 
-my $i = 0;  # 取出第 1 个数组
-my @array = @{ $arrays_copies[$i] };  # 解引用并赋值给 @array
+$arrays_copies[3] = [ @original ];
 
-print "@array\n";  # 输出: 4 5 6
+for my $i(0..3){
+    my @array = @{ $arrays_copies[$i] };  # 解引用并赋值给 @array
+    print "@array\n";  # 输出: 4 5 6
+}
+
+if ((1 >= 2)) {
+    print '1>=2';
+} else {
+    print '<';
+}
+
+
+
+
+
+
+# my @array_add = add($arrays_copies[1],$arrays_copies[2]);
+# print "@array_add\n";  # 输出: 4 5 6
+
+
+
+
+
+
+sub sign {
+    my ($value_f) = @_;
+    return ($value_f > 0) ? 1 : ($value_f < 0) ? -1 : 0;
+}
+
+
+sub psList {
+    my ($array_ref) = @_;
+    my @array_f = @$array_ref;
+
+    for (my $i = 0; $i < @array_f; $i += 3) {
+        print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
+    }
+}
 
 
 
@@ -83,14 +119,7 @@ sub distence {#(vector,pList)
     return ($mid_dis, $pointi_f);  # 返回多个值
 }
 
-sub psList {
-    my ($array_ref) = @_;
-    my @array_f = @$array_ref;
 
-    for (my $i = 0; $i < @array_f; $i += 3) {
-        print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
-    }
-}
 
 sub norm {  # (array)
     my ($array_ref) = @_;

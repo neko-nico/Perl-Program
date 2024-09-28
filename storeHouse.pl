@@ -1,4 +1,11 @@
-#不再需要的样例代码
+ #不再需要的样例代码
+
+
+##取数值的符号
+my $a_sign = 3;
+my $b_sign = 5;
+my $result_sign = $a_sign *2 ** sign($a_sign*$b_sign);
+print $result_sign,"\n";
 
 ##测试检测最近原子
 my @vector = 0..2;

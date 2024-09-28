@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-my $points_Num = 4;
+my $points_Num = 100;
 my $r_equ = 1.5;
 
 my $iniRange = 0.8 * $r_equ * $points_Num **(1/3);
@@ -17,12 +17,12 @@ my $mid_dis;
 for my $i(1..$points_Num-1){
     @random_point = (rand(), rand(), rand(),);
     @random_point = map { ($_ * 2 - 1 )* $iniRange } @random_point;
-    $mid_dis = (distence(\@random_point,\@points_List))[0];
+    $mid_dis = (distance(\@random_point,\@points_List))[0];
 
     while ( $mid_dis < $r_equ || norm(\@random_point) > $iniRange) {
         @random_point = (rand(), rand(), rand(),);
         @random_point = map { ($_ * 2 - 1 )* $iniRange } @random_point;
-        $mid_dis = (distence(\@random_point,\@points_List))[0];
+        $mid_dis = (distance(\@random_point,\@points_List))[0];
         print "Too close, restart!\n";
     }
     push @points_List, @random_point;
@@ -30,13 +30,15 @@ for my $i(1..$points_Num-1){
 
 # psList(\@points_List);
 
+
+
 my ($energy_mid, @gr_mid) = get_EngAndGrad(\@points_List);
 print "energy:\n", $energy_mid, ",\ngr:\n";
 psList(\@gr_mid);
 
 my $energy = $energy_mid;
-my @gr = - @gr_mid;
-my @dr = map { -$_ } @gr_mid;
+my @gr = @gr_mid;
+my @dr = map { -$_ } @gr;
 #print 'gr_mid:', scalar(@gr_mid), ', dr:',scalar(@dr),"\n";
 
 my $k = 0;
@@ -54,8 +56,8 @@ my @section = (0);
 my $nantest = 0;
 my $maxMove = 0.1;
 
-my $a_param = 0;
-my $b_param = 0;
+my $aa = 0;
+my $bb = 0;
 my $change = 0;
 my $accu = 0.1;
 my $ss = 0;
@@ -66,23 +68,201 @@ my $times = 0;
 my $timeTotal = 0;
 #my $notimes = 0;
 
-my ($t1,$f1,$g1,$limit);
+my ($t1, $f1, $g1, $limit, @plist_mid,
+    $t2, $f2, $g2, 
+    $tNew, $fNew, $gNew,
+    @move, @dr_mid, @glist_subtract, );
 
 while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
-    $times ++;
+
+    $times++;
     print "point:",$times,"\n";
 
     $t1 = 0;
     ($energy_mid, @gr_mid) = get_EngAndGrad(\@points_List);
     $f1 = $energy_mid;
-
-    $g1 = - dot(\@gr_mid,\@dr);
+    $g1 = dot(\@gr_mid,\@dr);
     printf("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
 
     $limit = 0;
 
+    while ( (abs($g1) > $accu && $limit < 10 )|| $limit ==0 ) {
+        $limit++;
+
+        if ($g1 < 0) {
+            $h = abs $h;
+        } else {
+            $h = - abs $h;
+        }
+
+        $t2 = $t1 + $h;
+        @plist_mid = map { $_ * $t2 } @dr;
+        @plist_mid = add(\@points_List, \@plist_mid, 0);
+
+        ($energy_mid, @gr_mid) = get_EngAndGrad(\@plist_mid);
+        $f2 = $energy_mid;
+        $g2 = dot(\@gr_mid,\@dr);
+        printf("t2:%.4f, f2:%.4f, g2:%.4f\n", $t2, $f2, $g2);
+
+        if (abs($g2) < $accu) {
+            $t1 = $t2 * 2** sign( $g1 * $g2 );
+            $f1 = $f2;
+            $g1 = $g2;
+            print "finish, point satisfied.\n";
+            printf("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
+
+            $timeTotal++;
+            push @elist, $f1;
+            $h = $t1;
+            push @hlist, $h;
+            last;
+        }
+
+        if ($g1 * $g2 < 0) {
+            if ($h > 0) {
+                $aa = $t1;
+                $bb = $t2;
+            } else {
+                $aa = $t2;
+                $bb = $t1;
+                ($f1, $f2) = ($f2, $f1);
+            }
+            $ss = 3* ($f2 - $f1)/ ($bb - $aa);
+            $zz = $ss - $g1 - $g2;
+            $ww = sqrt($zz* $zz - $g1* $g2);
+
+            $tNew = $t1 + ($bb - $aa)* (1 - ($g2 + $ww + $zz)/ ($g2 - $g1 + 2* $ww) );
+            @plist_mid = map { $_ * $tNew } @dr;
+            @plist_mid = add(\@points_List, \@plist_mid, 0);
+
+            ($energy_mid, @gr_mid) = get_EngAndGrad(\@plist_mid);
+            $fNew = $energy_mid;
+            $gNew = dot(\@gr_mid,\@dr);
+
+            if (($t1 < $tNew && $tNew < $t2) || ($t1 > $tNew && $tNew > $t2)) {
+
+                if ( abs $gNew < abs $g1 ) {
+                    if ( $gNew * $g1 > 0) {
+                        $t1 = $tNew;
+                        $f1 = $fNew;
+                        $g1 = $gNew;
+                        print "new Point!\n";
+
+                    } else {
+                        @dr = map { -$_ } @dr;
+                        $t1 = - $tNew;
+                        $f1 = $fNew;
+                        $g1 = - $gNew;
+                        print "new Point! ~ change Direction\n";
+                    }
+                }
+
+                if ( abs($gNew) > $accu || $limit == 1 ) {
+                    $h = $h / 6;
+                    print "step too long!!\n";
+
+                }
+
+            } else {
+                $h = $h / 4;
+                $t1 = ($t1 + $t2)/ 2;
+                @plist_mid = map { $_ * $t1 } @dr;
+                @plist_mid = add(\@points_List, \@plist_mid, 0);
+
+                ($energy_mid, @gr_mid) = get_EngAndGrad(\@plist_mid);
+                $fNew = $energy_mid;
+                $gNew = dot(\@gr_mid,\@dr);
+                print "3rd interact error, take middle point\n"
+            }
+
+        } elsif (abs($g2) < 2 * abs($g1)) {
+            $h = $h * 2;
+            $t1 = $t2;
+            $f1 = $f2;
+            $g1 = $g2;
+            print "forward, and step too short......\n";
+
+        } else {
+            $h = $h / 6;
+            print "error in Grad, back.\n";
+
+        }
+
+        # print "energy:\n", $f1, ",\ngr:\n";
+        # psList(\@gr);
+
+        $timeTotal++;
+        push @elist, $f1;
+        push @hlist, $h;
+
+    }
+    print "Total circle times:", $timeTotal, "\n";
+
+    if ($t1 == 0) {
+        $t1 = $t1 + $h;
+    }
+
+    $h = $t1;
+    $k++;
+    push @section, $timeTotal;
+
+    @move = map { $_ * $t1 } @dr;
+    for (my $i = 0; $i < @move; $i++) {
+        if (abs($move[$i]) > $maxMove) {
+            $move[$i] = ($move[$i] > 0 ? 1 : -1) * $maxMove;
+        }
+    }
+    @points_List = add(\@points_List, \@move, 0);
+    # (_, @gr_mid) = get_EngAndGrad(\@points_List);
+    # @gr = @gr_mid;
+    ( $energy , @gr) = get_EngAndGrad(\@points_List);
+
+    #ignore NaN test;
+
+    push @glist,[ @gr ];
+
+    if (abs( dot($glist[$k - 1], $glist[$k])) > 0.2* norm($glist[$k])**2 ||
+        $k - $k >= 3* $points_Num - 1 )
+    {
+        $t = $k - 1;
+        print "work!\n";
+    }
+
+    @glist_subtract = add($glist[$k], $glist[$k - 1], 1);
+    @dr_mid = map { $_ * dot($glist[$k], \@glist_subtract)
+                       / dot($dlist[$k - 1], \@glist_subtract)
+                  } @{ $dlist[$k - 1] };
+    @dr_mid = add(\@dr_mid, $glist[$k], 1);
+
+    if ($k > $t + 1) {
+        @glist_subtract = add ($glist[$t + 1], $glist[$t], 1);
+        @dr_mid = add([ map { $_ * dot($glist[$k], \@glist_subtract)
+                                 / dot($dlist[$t], \@glist_subtract)
+                            } @{$dlist[$t]}], \@dr_mid, 0);
+    }
+
+    push @dlist, [@dr_mid];
+
+    if ($k > $t + 1 &&
+        -1.2* (norm($glist[$k]))**2 > dot($dlist[$k], $glist[$k]) ||
+        dot($dlist[$k], $glist[$k]) > -0.8* (norm($glist[$k]))**2 ) 
+    {
+        $t = $k -1;
+        @glist_subtract = add($glist[$k], $glist[$k - 1], 1);
+        @dr_mid = add([ map { $_ * dot($glist[$k], \@glist_subtract)
+                                 / dot($dlist[$k - 1], \@glist_subtract)
+                            } @{$dlist[$k - 1]}], $glist[$k], 1);
+        $dlist[$k] = [ @dr_mid ];
+    }
+    @dr = @dr_mid;
 
 }
+
+($energy, @gr) = get_EngAndGrad(\@points_List);
+print 'energy:',$energy,"\n";
+psList(\@gr);
+
+
 
 
 
@@ -96,19 +276,17 @@ sub get_EngAndGrad{#(points_list)
 
 sub random_array {
     my ($length, $range) = @_;
-    my @random_array;
+    my @random_array_f;
 
     for (my $i = 0; $i < $length; $i++) {
-        push @random_array, (2* rand()-1)* $range;
+        push @random_array_f, (2* rand()-1)* $range;
     }
 
-    return @random_array;
+    return @random_array_f;
 }
 
 
-
-
-sub distence {#(vector,pList)
+sub distance {#(vector,pList)
     my ($vector_ref, $pList_ref) = @_;
     my @vector_f = @$vector_ref;
     my @pList_f = @$pList_ref;
@@ -179,15 +357,9 @@ sub dot {
     return $result;
 }
 
-sub random_array {
-    my ($length, $range) = @_;
-    my @random_array;
-
-    for (my $i = 0; $i < $length; $i++) {
-        push @random_array, (2* rand()-1)* $range;
-    }
-
-    return @random_array;
+sub sign {
+    my ($value_f) = @_;
+    return ($value_f > 0) ? 1 : ($value_f < 0) ? -1 : 0;
 }
 
 sub psList {
