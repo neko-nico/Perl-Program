@@ -3,7 +3,6 @@ use strict;
 use warnings;
 
 
-
 #生成随机数组
 my @randList = random_array(5, 10);  # 生成长度为5，范围[-10, 10]的随机数组
 psList(\@randList);
