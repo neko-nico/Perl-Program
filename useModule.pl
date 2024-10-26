@@ -51,9 +51,9 @@ psList(\@gr_mid);
 sub caculateForceCastep{ #doc, $atoms
     my ($pList_ref, $module_f) = @_;
     my @pList_f = @$pList_ref;
-    my @fList_f = (0) x @$pList_f;
+    my @fList_f = (0) x @pList_f;
 
-    if (scalar @$atoms == scalar @pList_f) {
+    if (3* scalar @$atoms == scalar @pList_f) {
         print "Same lenth, No Problem~\n";
     } else{
         print "Length is error!!\n"
@@ -68,29 +68,31 @@ sub caculateForceCastep{ #doc, $atoms
     }
 
     $doc->Save();
+    
+    my $results;
 
     if ($module_f eq "castep") {
-        print "Using Castep Modules~\n"
+        print "Using Castep Modules~\n";
 
-        my $results = Modules->CASTEP->Energy->Run($doc, Settings(
+        $results = Modules->CASTEP->Energy->Run($doc, Settings(
             SCFConvergence => 1e-005, 
             Quality => 'Coarse', 
             # PropertiesKPointQuality => 'Coarse',
         ));
-        print "Castep finish!\n"
+        print "Castep finish!\n";
 
     } elsif ($module_f eq "dmol") {
-        print "Using DMol Modules~\n"
+        print "Using DMol Modules~\n";
 
-        my $results = Modules->DMol3->Energy->Run($doc, Settings(
+        $results = Modules->DMol3->Energy->Run($doc, Settings(
             CalculateForces => 'Yes',
             Quality => 'Medium', 
             AtomCutoff => 3.3,
         ));
-        print "MMol finish!\n"
+        print "MMol finish!\n";
 
     }else {
-        print "?what?,check you input!\n"
+        print "?what?,check you input!\n";
     }
 
     my $result_Atoms = $results->Structure->DisplayRange->Atoms;
@@ -104,8 +106,8 @@ sub caculateForceCastep{ #doc, $atoms
     }
     my $result_energy = $results->TotalEnergy;
 
-    print "we get the energy:", $result_energy,"\n","and the forceList:\n";
-    psList(\@fList_f);
+    # print "we get the energy:", $result_energy,"\n","and the forceList:\n";
+    # psList(\@fList_f);
 
     return ($result_energy, @fList_f);
 }
@@ -215,4 +217,5 @@ sub psList {
         print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
     }
 }
+
 
