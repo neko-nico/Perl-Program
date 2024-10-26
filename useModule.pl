@@ -5,7 +5,6 @@ use warnings;
 use Getopt::Long;
 use MaterialsScript qw(:all);
 
-
 #--> Creat Points List
 my $points_Num = 3;
 my $r_equ = 1.5;
@@ -42,13 +41,13 @@ psList(\@points_List);
 my $doc = $Documents{"Atoms_3_Dmol.xsd"};
 my $atoms = $doc -> Atoms;
 
-my ($energy_mid, @gr_mid) = caculateForceCastep(\@points_List, "dmol");
+my ($energy_mid, @gr_mid) = caculateForce(\@points_List, "dmol");
 
-print "Again!\nwe get the energy:", $energy_mid,"\n","and the forceList:\n";
+print "we get the energy:", $energy_mid,"\n","and the forceList:\n";
 psList(\@gr_mid);
 
 
-sub caculateForceCastep{ #doc, $atoms
+sub caculateForce{ #doc, $atoms
     my ($pList_ref, $module_f) = @_;
     my @pList_f = @$pList_ref;
     my @fList_f = (0) x @pList_f;
@@ -109,6 +108,7 @@ sub caculateForceCastep{ #doc, $atoms
     # print "we get the energy:", $result_energy,"\n","and the forceList:\n";
     # psList(\@fList_f);
 
+    @fList_f = map { -$_ } @fList_f;
     return ($result_energy, @fList_f);
 }
 
