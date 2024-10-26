@@ -1,8 +1,12 @@
 #!/usr/bin/perl
+
 use strict;
 use warnings;
+use Getopt::Long;
+use MaterialsScript qw(:all);
 
-my $points_Num = 100;
+#--> Creat Points List
+my $points_Num = 3;
 my $r_equ = 1.5;
 
 my $iniRange = 0.8 * $r_equ * $points_Num **(1/3);
@@ -28,12 +32,20 @@ for my $i(1..$points_Num-1){
     push @points_List, @random_point;
 }
 
-# psList(\@points_List);
+@points_List = map { $_ + $iniRange } @points_List;
 
+print "pointsList:\n";
+psList(\@points_List);
 
+#--> Import .xsd File
+my $doc = $Documents{"Atoms_3_Dmol.xsd"};
+my $atoms = $doc -> Atoms;
+my $model_choose = "dmol";
+#--
 
-my ($energy_mid, @gr_mid) = get_EngAndGrad(\@points_List);
-print "energy:\n", $energy_mid, ",\ngr:\n";
+my ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
+
+print "we get the energy:", $energy_mid,"\n","and the forceList:\n";
 psList(\@gr_mid);
 
 my $energy = $energy_mid;
@@ -79,7 +91,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
     print "point:",$times,"\n";
 
     $t1 = 0;
-    ($energy_mid, @gr_mid) = get_EngAndGrad(\@points_List);
+    ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
     $f1 = $energy_mid;
     $g1 = dot(\@gr_mid,\@dr);
     printf("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
@@ -99,7 +111,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
         @plist_mid = map { $_ * $t2 } @dr;
         @plist_mid = add(\@points_List, \@plist_mid, 0);
 
-        ($energy_mid, @gr_mid) = get_EngAndGrad(\@plist_mid);
+        ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
         $f2 = $energy_mid;
         $g2 = dot(\@gr_mid,\@dr);
         printf("t2:%.4f, f2:%.4f, g2:%.4f\n", $t2, $f2, $g2);
@@ -135,7 +147,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
             @plist_mid = map { $_ * $tNew } @dr;
             @plist_mid = add(\@points_List, \@plist_mid, 0);
 
-            ($energy_mid, @gr_mid) = get_EngAndGrad(\@plist_mid);
+            ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
             $fNew = $energy_mid;
             $gNew = dot(\@gr_mid,\@dr);
 
@@ -169,7 +181,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
                 @plist_mid = map { $_ * $t1 } @dr;
                 @plist_mid = add(\@points_List, \@plist_mid, 0);
 
-                ($energy_mid, @gr_mid) = get_EngAndGrad(\@plist_mid);
+                ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
                 $fNew = $energy_mid;
                 $gNew = dot(\@gr_mid,\@dr);
                 print "3rd interact error, take middle point\n"
@@ -213,9 +225,9 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
         }
     }
     @points_List = add(\@points_List, \@move, 0);
-    # (_, @gr_mid) = get_EngAndGrad(\@points_List);
+    # (_, @gr_mid) = caculateForce(\@points_List, $model_choose);
     # @gr = @gr_mid;
-    ( $energy , @gr) = get_EngAndGrad(\@points_List);
+    ( $energy , @gr) = caculateForce(\@points_List, $model_choose);
 
     #ignore NaN test;
 
@@ -258,13 +270,76 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
 
 }
 
-($energy, @gr) = get_EngAndGrad(\@points_List);
+($energy, @gr) = caculateForce(\@points_List, $model_choose);
 print 'energy:',$energy,"\n";
 psList(\@gr);
 
 
 
+sub caculateForce{ #doc, $atoms
+    my ($pList_ref, $module_f) = @_;
+    my @pList_f = @$pList_ref;
+    my @fList_f = (0) x @pList_f;
 
+    if (3* scalar @$atoms == scalar @pList_f) {
+        print "Same lenth, No Problem~\n";
+    } else{
+        print "Length is error!!\n"
+    }
+
+    for (my $i = 0; $i < @$atoms; $i++) {
+        my $atom = @$atoms[$i];
+        $atom->XYZ = Point(X => $pList_f[3*$i],
+                       Y=> $pList_f[3*$i+1],
+                       Z => $pList_f[3*$i+2]);
+        #print 'point: ',$i," is changed\n";
+    }
+
+    $doc->Save();
+    
+    my $results;
+
+    if ($module_f eq "castep") {
+        print "Using Castep Modules~\n";
+
+        $results = Modules->CASTEP->Energy->Run($doc, Settings(
+            SCFConvergence => 1e-005, 
+            Quality => 'Coarse', 
+            # PropertiesKPointQuality => 'Coarse',
+        ));
+        print "Castep finish!\n";
+
+    } elsif ($module_f eq "dmol") {
+        print "Using DMol Modules~\n";
+
+        $results = Modules->DMol3->Energy->Run($doc, Settings(
+            CalculateForces => 'Yes',
+            Quality => 'Medium', 
+            AtomCutoff => 3.3,
+        ));
+        print "MMol finish!\n";
+
+    }else {
+        print "?what?,check you input!\n";
+    }
+
+    my $result_Atoms = $results->Structure->DisplayRange->Atoms;
+
+    for (my $i = 0; $i < @$result_Atoms; $i++) {
+        my $eachAtom = @$result_Atoms[$i];
+        my $forceOfAtom = $eachAtom->Force;
+        $fList_f[ 3*$i ] = $forceOfAtom->X;
+        $fList_f[3*$i+1] = $forceOfAtom->Y;
+        $fList_f[3*$i+2] = $forceOfAtom->Z;
+    }
+    my $result_energy = $results->TotalEnergy;
+
+    # print "we get the energy:", $result_energy,"\n","and the forceList:\n";
+    # psList(\@fList_f);
+
+    @fList_f = map { -$_ } @fList_f;
+    return ($result_energy, @fList_f);
+}
 
 sub get_EngAndGrad{#(points_list)
     my ($plist_f) = @_;
