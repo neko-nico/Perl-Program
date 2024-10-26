@@ -1,5 +1,25 @@
  #不再需要的样例代码
 
+my $func = 0;
+
+print "正常循环访问\n";
+for (my $i = 0; $i < 4; $i++) {
+    print "i = ",$i,", and func = ";
+    $func = $i**2;
+    print $func,",\n";
+}
+
+
+if ((1 >= 2)) {
+    print '1>=2';
+} else {
+    print '<';
+}
+
+
+# my @array_add = add($arrays_copies[1],$arrays_copies[2]);
+# print "@array_add\n";  # 输出: 4 5 6
+
 
 ##取数值的符号
 my $a_sign = 3;

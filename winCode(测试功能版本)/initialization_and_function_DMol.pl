@@ -54,7 +54,8 @@ $doc->Save();
 my $results = Modules->DMol3->Energy->Run($doc, Settings(
 	Quality => 'Medium', 
 	AtomCutoff => 3.3, 
-	CalculateForces => 'Yes'));
+	CalculateForces => 'Yes'
+));
 
 
 
