@@ -85,7 +85,7 @@ my ($t1, $f1, $g1, $limit, @plist_mid,
     $tNew, $fNew, $gNew,
     @move, @dr_mid, @glist_subtract, );
 
-while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 2 ) {
+while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
 
     $times++;
     print "point:",$times,"\n";
@@ -98,7 +98,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 2 ) {
 
     $limit = 0;
 
-    while ( (abs($g1) > $accu && $limit < 4 )|| $limit ==0 ) {
+    while ( (abs($g1) > $accu && $limit < 5 )|| $limit ==0 ) {
         $limit++;
 
         if ($g1 < 0) {
@@ -281,11 +281,11 @@ sub caculateForce{ #doc, $atoms
     my @pList_f = @$pList_ref;
     my @fList_f = (0) x @pList_f;
 
-    if (3* scalar @$atoms == scalar @pList_f) {
-        print "Same lenth, No Problem~\n";
-    } else{
-        print "Length is error!!\n"
-    }
+    # if (3* scalar @$atoms == scalar @pList_f) {
+    #     print "Same lenth, No Problem~\n";
+    # } else{
+    #     print "Length is error!!\n"
+    # }
 
     for (my $i = 0; $i < @$atoms; $i++) {
         my $atom = @$atoms[$i];
@@ -342,7 +342,7 @@ sub caculateForce{ #doc, $atoms
 
 sub get_EngAndGrad{#(points_list)
     my ($plist_f) = @_;
-    my $length = scalar @$plist_f;  # 获取数组长度
+    my $length = scalar @$plist_f;
     my @result = random_array($length, 3);
 
     return (rand()*10,@result);
