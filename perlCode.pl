@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!perl
 
 use strict;
 use warnings;
@@ -61,7 +61,7 @@ my @dlist;
 push @dlist, [ @dr ];
 my @elist = ($energy);
 
-my $h = norm(\@gr)/1000;
+my $h = norm(\@gr)/1000000;
 print 'first step:', $h, ".\n";
 my @hlist = ($h);
 my @section = (0);
@@ -85,7 +85,7 @@ my ($t1, $f1, $g1, $limit, @plist_mid,
     $tNew, $fNew, $gNew,
     @move, @dr_mid, @glist_subtract, );
 
-while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
+while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 2 ) {
 
     $times++;
     print "point:",$times,"\n";
@@ -98,7 +98,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
 
     $limit = 0;
 
-    while ( (abs($g1) > $accu && $limit < 10 )|| $limit ==0 ) {
+    while ( (abs($g1) > $accu && $limit < 4 )|| $limit ==0 ) {
         $limit++;
 
         if ($g1 < 0) {
@@ -111,7 +111,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
         @plist_mid = map { $_ * $t2 } @dr;
         @plist_mid = add(\@points_List, \@plist_mid, 0);
 
-        ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
+        ($energy_mid, @gr_mid) = caculateForce(\@plist_mid, $model_choose);
         $f2 = $energy_mid;
         $g2 = dot(\@gr_mid,\@dr);
         printf("t2:%.4f, f2:%.4f, g2:%.4f\n", $t2, $f2, $g2);
@@ -147,7 +147,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
             @plist_mid = map { $_ * $tNew } @dr;
             @plist_mid = add(\@points_List, \@plist_mid, 0);
 
-            ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
+            ($energy_mid, @gr_mid) = caculateForce(\@plist_mid, $model_choose);
             $fNew = $energy_mid;
             $gNew = dot(\@gr_mid,\@dr);
 
@@ -181,7 +181,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 5 ) {
                 @plist_mid = map { $_ * $t1 } @dr;
                 @plist_mid = add(\@points_List, \@plist_mid, 0);
 
-                ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
+                ($energy_mid, @gr_mid) = caculateForce(\@plist_mid, $model_choose);
                 $fNew = $energy_mid;
                 $gNew = dot(\@gr_mid,\@dr);
                 print "3rd interact error, take middle point\n"
@@ -337,8 +337,7 @@ sub caculateForce{ #doc, $atoms
     # print "we get the energy:", $result_energy,"\n","and the forceList:\n";
     # psList(\@fList_f);
 
-    @fList_f = map { -$_ } @fList_f;
-    return ($result_energy, @fList_f);
+    return ($result_energy, map { -$_ } @fList_f);
 }
 
 sub get_EngAndGrad{#(points_list)
