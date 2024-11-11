@@ -1,8 +1,9 @@
-#!/usr/bin/perl
+#!perl
+
 use strict;
 use warnings;
-
-
+# use Getopt::Long;
+# use MaterialsScript qw(:all);
 
 #生成随机数组
 my @randList = random_array(9, 10);  # 生成长度为5，范围[-10, 10]的随机数组
@@ -43,9 +44,6 @@ for my $i(0..3){
 
 
 
-
-
-
 my $func = 0;
 print "子程序函数访问方式\n";
 printi2();
@@ -63,71 +61,57 @@ print "最终的func为：",$func,",\n";
 
 
 
+# 使用示例
+my @data = random_array(10,1);  # 示例数据
+# 生成从1到N的数组
+my @data_index = (1..@data);
+my $filename = 'output.csv';
 
-my $doc = $Documents{"Atoms_3.xsd"};
-my $atoms = $doc -> DisplayRange -> Atoms;
+save_two_arrays_to_csv(\@data_index,\@data,$filename);
 
 
-caculateForceCastep(\@points_List, "dmol");
+sub save_two_arrays_to_csv {
+    my ($x_array_ref, $y_array_ref, $filename) = @_;
 
-sub caculateForceCastep{ #doc, $atoms
-    my ($pList_ref, $module_f) = @_;
-    my @pList_f = @$pList_ref;
-    my @fList_f = (0) x @$pList_f;
+    # 打开文件以写入
+    open my $fh, '>', $filename or die "无法打开文件 '$filename': $!";
 
-    if (scalar @$atoms == scalar @pList_f) {
-        print "Same lenth, No Problem~\n";
-    } else{
-        print "Length is error!!\n"
+    # 假设两个数组长度相同
+    for (my $i = 0; $i < @$x_array_ref; $i++) {
+        print $fh "$x_array_ref->[$i],$y_array_ref->[$i]\n";  # 每行写入自变量和因变量
     }
 
-    for (my $i = 0; $i < @$atoms; $i++) {
-        my $atom = @$atoms[$i];
-        $atom->XYZ = Point(X => $pList_f[3*$i],
-                       Y=> $pList_f[3*$i+1],
-                       Z => $pList_f[3*$i+2]);
-        #print 'point: ',$i," is changed\n";
-    }
-
-    $doc->Save();
-
-    if ($module_f eq "castep") {
-        print "Using Castep Modules~\n"
-
-        my $results = Modules->CASTEP->Energy->Run($doc, Settings(
-            SCFConvergence => 1e-005, 
-            Quality => 'Coarse', 
-            # PropertiesKPointQuality => 'Coarse',
-        ));
-        print "Castep finish!\n"
-
-    } elsif ($module_f eq "dmol") {
-        print "Using DMol Modules~\n"
-
-        my $results = Modules->DMol3->Energy->Run($doc, Settings(
-            CalculateForces => 'Yes',
-            Quality => 'Medium', 
-            AtomCutoff => 3.3,
-        ));
-        print "MMol finish!\n"
-
-    }else {
-        print "?what?,check you input!\n"
-    }
-
-    my $result_Atoms = $results->Structure->DisplayRange->Atoms;
-
-    for (my $i = 0; $i < @$result_Atoms; $i++) {
-        my $eachAtom = @$result_Atoms[$i];
-        my $forceOfAtom = $eachAtom->Force;
-        $fList_f[ 3*$i ] = $forceOfAtom->X;
-        $fList_f[3*$i+1] = $forceOfAtom->Y;
-        $fList_f[3*$i+2] = $forceOfAtom->Z;
-    }
-    my $result_energy = $results->TotalEnergy;
-
-    return ($result_energy, @fList_f);
+    close $fh;
 }
+
+
+my $anyNUm = 1.5e-006;
+print $anyNUm,"\n";
+
+
+
+for my $i (1..5) {
+    eval {
+        # 可能会出错的代码
+        if ($i == 3) {
+            die "发生错误！";  # 模拟错误
+        }
+        print "处理 $i\n";
+    };
+
+    if ($@) {  # 如果发生了错误
+        print "Time->$i, failed! $@\n";
+        next;  #last
+    }
+}
+
+print "循环结束。\n";
+
+
+
+
+
+
 
 
 sub get_EngAndGrad{#(points_list)
@@ -153,10 +137,6 @@ sub psList {
         print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
     }
 }
-
-
-
-
 
 sub random_array {
     my ($length, $range) = @_;

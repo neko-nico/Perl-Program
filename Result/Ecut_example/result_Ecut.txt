@@ -1,0 +1,38 @@
+import finish, start caculation.
+Energy Cutoff = 206.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10532.7071076971
+Energy Cutoff = 236.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10579.2626643887
+Energy Cutoff = 266.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10609.5185007276
+Energy Cutoff = 296.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10625.2118722993
+Energy Cutoff = 326.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10635.3126819182
+Energy Cutoff = 356.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10641.5616214868
+Energy Cutoff = 386.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10644.9045581548
+Energy Cutoff = 416.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10647.3917193665
+Energy Cutoff = 446.5
+CASTEP is runnign~~~
+CASTEP finish!!
+we get the energy:-10648.8152499377
+All finish!

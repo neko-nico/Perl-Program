@@ -1,0 +1,8 @@
+import finish, start caculation.
+kpGrid = 1
+we get the energy:-10635.3126292709
+kpGrid = 2
+we get the energy:-10635.3265769534
+kpGrid = 3
+we get the energy:-10635.3264926625
+All finish!

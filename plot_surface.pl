@@ -1,4 +1,5 @@
 #!perl
+#plot the energy surface in one dimension
 
 use strict;
 use warnings;
@@ -27,7 +28,7 @@ for my $i(1..$points_Num-1){
         @random_point = (rand(), rand(), rand(),);
         @random_point = map { ($_ * 2 - 1 )* $iniRange } @random_point;
         $mid_dis = (distance(\@random_point,\@points_List))[0];
-        #print "Too close, restart!\n";
+        print "Too close, restart!\n";
     }
     push @points_List, @random_point;
 }
@@ -40,23 +41,68 @@ psList(\@points_List);
 #--> Import .xsd File
 my $doc = $Documents{"Atoms_3_Dmol.xsd"};
 my $atoms = $doc -> Atoms;
+my $model_choose = "dmol";
+#--
 
-my ($energy_mid, @gr_mid) = caculateForce(\@points_List, "dmol");
+my ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
 
-print "we get the energy:", $energy_mid,"\n","and the forceList:\n";
+print "we get the intial energy:", $energy_mid,"\n","and the forceList:\n";
 psList(\@gr_mid);
 
+my $energy = $energy_mid;
+my @gr = @gr_mid;
+my @dr = map { -$_ } @gr;
+#print 'gr_mid:', scalar(@gr_mid), ', dr:',scalar(@dr),"\n";
+
+my $h = norm(\@gr)/1000000;
+my @plist_hdr = map { $_ * $h } @dr;
+
+my @elist = ($energy);
+my @drgrList = (dot(\@gr,\@dr));
+
+for (my $i = 0; $i < 5; $i++) {
+    @points_List = add(\@points_List, \@plist_hdr, 0);
+    ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
+
+    push @elist, $energy_mid;
+    push @drgrList, dot(\@gr_mid,\@dr);
+}
+
+
+#my @data_index = (1..@elist);
+#save_two_arrays_to_csv(\@data_index, \@elist,
+#                        'C:\Users\25592\Documents\Materials Studio Projects\castep_Files\Documents\elist.csv');
+#save_two_arrays_to_csv(\@data_index, \@drgrList,
+#                        'C:\Users\25592\Documents\Materials Studio Projects\castep_Files\Documents\drgrList.csv');
+
+save_two_arrays_to_csv(\@elist, \@drgrList,
+                        'C:\Users\m\Documents\Materials Studio Projects\castep_Files\Documents\Result.csv');
+print "All finished!";
+
+
+
+sub save_two_arrays_to_csv {
+    my ($x_array_ref, $y_array_ref, $filename) = @_;
+
+    open my $fh, '>', $filename or die "filed to open '$filename': $!";
+
+    for (my $i = 0; $i < @$x_array_ref; $i++) {
+        print $fh "$x_array_ref->[$i],$y_array_ref->[$i]\n";
+    }
+
+    close $fh;
+}
 
 sub caculateForce{ #doc, $atoms
     my ($pList_ref, $module_f) = @_;
     my @pList_f = @$pList_ref;
     my @fList_f = (0) x @pList_f;
 
-    if (3* scalar @$atoms == scalar @pList_f) {
-        print "Same lenth, No Problem~\n";
-    } else{
-        print "Length is error!!\n"
-    }
+    # if (3* scalar @$atoms == scalar @pList_f) {
+    #     print "Same lenth, No Problem~\n";
+    # } else{
+    #     print "Length is error!!\n"
+    # }
 
     for (my $i = 0; $i < @$atoms; $i++) {
         my $atom = @$atoms[$i];
@@ -111,7 +157,6 @@ sub caculateForce{ #doc, $atoms
     return ($result_energy, map { -$_ } @fList_f);
 }
 
-
 sub get_EngAndGrad{#(points_list)
     my ($plist_f) = @_;
     my $length = scalar @$plist_f;
@@ -157,10 +202,8 @@ sub distance {#(vector,pList)
         }
     }
 
-    return ($mid_dis_f, $pointi_f);
+    return ($mid_dis_f, $pointi_f);  # 返回多个值
 }
-
-
 
 sub norm {
     my ($array_ref) = @_;
@@ -216,6 +259,4 @@ sub psList {
         print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
     }
 }
-
-
 
