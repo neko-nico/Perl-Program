@@ -4,6 +4,23 @@ use strict;
 use warnings;
 use Getopt::Long;
 use MaterialsScript qw(:all);
+use Storable qw(store);
+use Storable qw(retrieve);
+
+my $floder = 'C:/Users/Neko/Documents/Materials Studio Projects/castep_Files/Documents/';
+
+my $dateFileName = 'MinSearch/data_3.csv';
+$dateFileName = $floder . $dateFileName;
+open my $dateFile, '>', $dateFileName or die "filed to open '$dateFileName': $!";
+
+print $dateFile "Energy, Gradient, Direction\n";
+
+my $logFileName = 'MinSearch/log.txt';
+$logFileName = $floder . $logFileName;
+open my $logFile, '>', $logFileName or die "filed to open '$logFileName': $!";
+
+my $variableFile = 'MinSearch/variables.dat';
+$variableFile = $floder . $variableFile;
 
 #--> Creat Points List
 my $points_Num = 3;
@@ -27,14 +44,14 @@ for my $i(1..$points_Num-1){
         @random_point = (rand(), rand(), rand(),);
         @random_point = map { ($_ * 2 - 1 )* $iniRange } @random_point;
         $mid_dis = (distance(\@random_point,\@points_List))[0];
-        print "Too close, restart!\n";
+        print $logFile "Too close, restart!\n";
     }
     push @points_List, @random_point;
 }
 
 @points_List = map { $_ + $iniRange } @points_List;
 
-print "pointsList:\n";
+print $logFile "pointsList:\n";
 psList(\@points_List);
 
 #--> Import .xsd File
@@ -45,13 +62,13 @@ my $model_choose = "dmol";
 
 my ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
 
-print "we get the energy:", $energy_mid,"\n","and the forceList:\n";
+print $logFile "we get the energy:", $energy_mid,"\n","and the forceList:\n";
 psList(\@gr_mid);
 
 my $energy = $energy_mid;
 my @gr = @gr_mid;
 my @dr = map { -$_ } @gr;
-#print 'gr_mid:', scalar(@gr_mid), ', dr:',scalar(@dr),"\n";
+#print $logFile 'gr_mid:', scalar(@gr_mid), ', dr:',scalar(@dr),"\n";
 
 my $k = 0;
 my $t = 1;
@@ -61,9 +78,12 @@ my @dlist;
 push @dlist, [ @dr ];
 my @elist = ($energy);
 
-my $h = norm(\@gr)/1000000;
-print 'first step:', $h, ".\n";
+my $h = norm(\@gr)/100000;
+print $logFile 'first step:', $h, ".\n";
 my @hlist = ($h);
+
+print $dateFile "$energy,$h\n";
+
 my @section = (0);
 my $nantest = 0;
 my $maxMove = 0.1;
@@ -85,20 +105,20 @@ my ($t1, $f1, $g1, $limit, @plist_mid,
     $tNew, $fNew, $gNew,
     @move, @dr_mid, @glist_subtract, );
 
-while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
+while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 40 ) {
 
     $times++;
-    print "point:",$times,"\n";
+    print $logFile "point:",$times,"\n";
 
     $t1 = 0;
     ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
     $f1 = $energy_mid;
     $g1 = dot(\@gr_mid,\@dr);
-    printf("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
+    printf $logFile("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
 
     $limit = 0;
 
-    while ( (abs($g1) > $accu && $limit < 5 )|| $limit ==0 ) {
+    while ( (abs($g1) > $accu && $limit < 8 )|| $limit ==0 ) {
         $limit++;
 
         if ($g1 < 0) {
@@ -114,19 +134,20 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
         ($energy_mid, @gr_mid) = caculateForce(\@plist_mid, $model_choose);
         $f2 = $energy_mid;
         $g2 = dot(\@gr_mid,\@dr);
-        printf("t2:%.4f, f2:%.4f, g2:%.4f\n", $t2, $f2, $g2);
+        printf $logFile("t2:%.4f, f2:%.4f, g2:%.4f\n", $t2, $f2, $g2);
 
         if (abs($g2) < $accu) {
             $t1 = $t2 * 2** sign( $g1 * $g2 );
             $f1 = $f2;
             $g1 = $g2;
-            print "finish, point satisfied.\n";
-            printf("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
+            print $logFile "finish, point satisfied.\n";
+            printf $logFile("t1:%.4f, f1:%.4f, g1:%.4f\n", $t1, $f1, $g1);
 
             $timeTotal++;
             push @elist, $f1;
             $h = $t1;
             push @hlist, $h;
+            print $dateFile "$f1,$h\n";
             last;
         }
 
@@ -158,20 +179,20 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
                         $t1 = $tNew;
                         $f1 = $fNew;
                         $g1 = $gNew;
-                        print "new Point!\n";
+                        print $logFile "new Point!\n";
 
                     } else {
                         @dr = map { -$_ } @dr;
                         $t1 = - $tNew;
                         $f1 = $fNew;
                         $g1 = - $gNew;
-                        print "new Point! ~ change Direction\n";
+                        print $logFile "new Point! ~ change Direction\n";
                     }
                 }
 
                 if ( abs($gNew) > $accu || $limit == 1 ) {
                     $h = $h / 6;
-                    print "step too long!!\n";
+                    print $logFile "step too long!!\n";
 
                 }
 
@@ -184,7 +205,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
                 ($energy_mid, @gr_mid) = caculateForce(\@plist_mid, $model_choose);
                 $fNew = $energy_mid;
                 $gNew = dot(\@gr_mid,\@dr);
-                print "3rd interact error, take middle point\n"
+                print $logFile "3rd interact error, take middle point\n"
             }
 
         } elsif (abs($g2) < 2 * abs($g1)) {
@@ -192,23 +213,24 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
             $t1 = $t2;
             $f1 = $f2;
             $g1 = $g2;
-            print "forward, and step too short......\n";
+            print $logFile "forward, and step too short......\n";
 
         } else {
             $h = $h / 6;
-            print "error in Grad, back.\n";
+            print $logFile "error in Grad, back.\n";
 
         }
 
-        # print "energy:\n", $f1, ",\ngr:\n";
+        # print $logFile "energy:\n", $f1, ",\ngr:\n";
         # psList(\@gr);
 
         $timeTotal++;
         push @elist, $f1;
         push @hlist, $h;
+        print $dateFile "$f1,$h\n";
 
     }
-    print "Total circle times:", $timeTotal, "\n";
+    print $logFile "Total circle times:", $timeTotal, "\n";
 
     if ($t1 == 0) {
         $t1 = $t1 + $h;
@@ -227,6 +249,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
     @points_List = add(\@points_List, \@move, 0);
     # (_, @gr_mid) = caculateForce(\@points_List, $model_choose);
     # @gr = @gr_mid;
+    
     ( $energy , @gr) = caculateForce(\@points_List, $model_choose);
 
     #ignore NaN test;
@@ -237,7 +260,7 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
         $k - $k >= 3* $points_Num - 1 )
     {
         $t = $k - 1;
-        print "work!\n";
+        print $logFile "work!\n";
     }
 
     @glist_subtract = add($glist[$k], $glist[$k - 1], 1);
@@ -268,11 +291,30 @@ while (norm(\@gr) > 0.05 * sqrt($points_Num) && $times < 3 ) {
     }
     @dr = @dr_mid;
 
+    #print $dateFile "@gr,@dr_mid\n";
+
 }
 
 ($energy, @gr) = caculateForce(\@points_List, $model_choose);
-print 'energy:',$energy,"\n";
+print $logFile 'energy:',$energy,"\n";
 psList(\@gr);
+
+print $logFile "finish writing：data_x.csv\n";
+
+my $dataStore_ref = {
+    array1 => \@elist,
+    array2 => \@glist,
+    array3 => \@dlist,
+    array4 => \@hlist,
+    array5 => \@section,
+    array6 => \@points_List,
+};
+
+store $dataStore_ref, $variableFile;
+print  $logFile "store finish!\n";
+
+close $dateFile;
+close $logFile;
 
 
 
@@ -282,9 +324,9 @@ sub caculateForce{ #doc, $atoms
     my @fList_f = (0) x @pList_f;
 
     # if (3* scalar @$atoms == scalar @pList_f) {
-    #     print "Same lenth, No Problem~\n";
+    #     print $logFile "Same lenth, No Problem~\n";
     # } else{
-    #     print "Length is error!!\n"
+    #     print $logFile "Length is error!!\n"
     # }
 
     for (my $i = 0; $i < @$atoms; $i++) {
@@ -292,7 +334,7 @@ sub caculateForce{ #doc, $atoms
         $atom->XYZ = Point(X => $pList_f[3*$i],
                        Y=> $pList_f[3*$i+1],
                        Z => $pList_f[3*$i+2]);
-        #print 'point: ',$i," is changed\n";
+        #print $logFile 'point: ',$i," is changed\n";
     }
 
     $doc->Save();
@@ -300,17 +342,17 @@ sub caculateForce{ #doc, $atoms
     my $results;
 
     if ($module_f eq "castep") {
-        print "Using Castep Modules~\n";
+        print $logFile "Using Castep Modules~\n";
 
         $results = Modules->CASTEP->Energy->Run($doc, Settings(
             SCFConvergence => 1e-005, 
             Quality => 'Coarse', 
             # PropertiesKPointQuality => 'Coarse',
         ));
-        print "Castep finish!\n";
+        print $logFile "Castep finish!\n";
 
     } elsif ($module_f eq "dmol") {
-        print "Using DMol Modules~\n";
+        print $logFile "Using DMol Modules~\n";
 
         $results = Modules->DMol3->Energy->Run($doc, Settings(
             MaxMemory => 6144, 
@@ -325,11 +367,11 @@ sub caculateForce{ #doc, $atoms
             UseSmearing => 'Yes', 
             CalculateForces => 'Yes', 
         ));
-        
-        print "MMol finish!\n";
+
+        print $logFile "MMol finish!\n";
 
     }else {
-        print "?what?,check you input!\n";
+        print $logFile "?what?,check you input!\n";
     }
 
     my $result_Atoms = $results->Structure->DisplayRange->Atoms;
@@ -343,7 +385,7 @@ sub caculateForce{ #doc, $atoms
     }
     my $result_energy = $results->TotalEnergy;
 
-    # print "we get the energy:", $result_energy,"\n","and the forceList:\n";
+    # print $logFile "we get the energy:", $result_energy,"\n","and the forceList:\n";
     # psList(\@fList_f);
 
     return ($result_energy, map { -$_ } @fList_f);
@@ -450,7 +492,7 @@ sub psList {
     my @array_f = @$array_ref;
 
     for (my $i = 0; $i < @array_f; $i += 3) {
-        print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
+        print $logFile join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
     }
 }
 
