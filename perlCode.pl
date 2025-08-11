@@ -6,20 +6,23 @@ use Getopt::Long;
 use MaterialsScript qw(:all);
 use Storable qw(store);
 use Storable qw(retrieve);
+use Time::HiRes qw(gettimeofday tv_interval);
+use POSIX qw(strftime);
 
-my $floder = 'C:/Users/Neko/Documents/Materials Studio Projects/castep_Files/Documents/';
 
-my $dateFileName = 'MinSearch/data_3.csv';
+my $floder = 'C:/Users/Neko/Documents/Materials Studio Projects/castep_Files/Documents/MinSearch/';
+
+my $dateFileName = 'data_3.csv';
 $dateFileName = $floder . $dateFileName;
 open my $dateFile, '>', $dateFileName or die "filed to open '$dateFileName': $!";
 
 print $dateFile "Energy, Gradient, Direction\n";
 
-my $logFileName = 'MinSearch/log.txt';
+my $logFileName = 'log.txt';
 $logFileName = $floder . $logFileName;
 open my $logFile, '>', $logFileName or die "filed to open '$logFileName': $!";
 
-my $variableFile = 'MinSearch/variables.dat';
+my $variableFile = 'variables.dat';
 $variableFile = $floder . $variableFile;
 
 #--> Creat Points List

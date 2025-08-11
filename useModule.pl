@@ -6,7 +6,7 @@ use Getopt::Long;
 use MaterialsScript qw(:all);
 
 #--> Creat Points List
-my $points_Num = 3;
+my $points_Num = 4;
 my $r_equ = 1.5;
 
 my $iniRange = 0.8 * $r_equ * $points_Num **(1/3);
@@ -38,7 +38,7 @@ print "pointsList:\n";
 psList(\@points_List);
 
 #--> Import .xsd File
-my $doc = $Documents{"Atoms_3_Dmol.xsd"};
+my $doc = $Documents{"Atoms_4_Dmol.xsd"};
 my $atoms = $doc -> Atoms;
 
 my ($energy_mid, @gr_mid) = caculateForce(\@points_List, "dmol");
@@ -95,6 +95,7 @@ sub caculateForce{ #doc, $atoms
             UseSmearing => 'Yes', 
             CalculateForces => 'Yes', 
         ));
+        
         print "MMol finish!\n";
 
     }else {
@@ -223,6 +224,7 @@ sub psList {
         print join(" ", @array_f[$i .. $i + 2]), "\n" if $i + 2 < @array_f;
     }
 }
+
 
 
 

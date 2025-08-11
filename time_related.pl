@@ -14,7 +14,7 @@ my $start = [gettimeofday];
 my $floder = 'C:/Users/Neko/Documents/Materials Studio Projects/castep_Files/Documents/';
 
 my $timeStr = strftime("%Y%m%d-%H_%M_%S", localtime);
-my $logFileName = "MinSearch/log_${timeStr}.txt";
+my $logFileName = "MinSearch/${timeStr}_log.txt";
 $logFileName = $floder . $logFileName;
 open my $logFile, '>', $logFileName or die "filed to open '$logFileName': $!";
 
