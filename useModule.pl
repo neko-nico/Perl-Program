@@ -84,9 +84,16 @@ sub caculateForce{ #doc, $atoms
         print "Using DMol Modules~\n";
 
         $results = Modules->DMol3->Energy->Run($doc, Settings(
-            CalculateForces => 'Yes',
-            Quality => 'Medium', 
-            AtomCutoff => 3.3,
+            TheoryLevel => 'GGA', 
+            NonLocalFunctional => 'PBE', 
+            HybridFunctional => 'TPSSh', 
+            Basis => 'DND', 
+            BasisFile => '3.5', 
+            OrbitalCutoffQuality => 'Fine', 
+            CutoffType => 'Custom', 
+            AtomCutoff => 7, 
+            UseSmearing => 'Yes', 
+            CalculateForces => 'Yes', 
         ));
         print "MMol finish!\n";
 
@@ -94,7 +101,7 @@ sub caculateForce{ #doc, $atoms
         print "?what?,check you input!\n";
     }
 
-    my $result_Atoms = $results->Structure->DisplayRange->Atoms;
+    my $result_Atoms = $results->Structure->Atoms;
 
     for (my $i = 0; $i < @$result_Atoms; $i++) {
         my $eachAtom = @$result_Atoms[$i];
