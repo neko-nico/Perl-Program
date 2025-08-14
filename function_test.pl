@@ -2,8 +2,13 @@
 
 use strict;
 use warnings;
-# use Getopt::Long;
+use Getopt::Long;
 # use MaterialsScript qw(:all);
+use Storable qw(store);
+use Storable qw(retrieve);
+use Time::HiRes qw(gettimeofday tv_interval);
+use POSIX qw(strftime);
+
 
 #生成随机数组
 my @randList = random_array(9, 10);  # 生成长度为5，范围[-10, 10]的随机数组
@@ -106,6 +111,31 @@ for my $i (1..5) {
 }
 
 print "循环结束。\n";
+
+
+
+
+#新建一个log文件，并以当前时间命名文件名称
+my $start = [gettimeofday];
+
+# my $floder = 'C:/Users/Neko/Documents/Materials Studio Projects/castep_Files/Documents/';
+my $floder = 'E:/Documents/Perl-Program/';
+
+my $logFileName = strftime("%m.%d-%H_%M_%S", localtime);
+$logFileName = "${logFileName}_log.txt";
+$logFileName = $floder . $logFileName;
+open my $logFile, '>', $logFileName or die "filed to open '$logFileName': $!";
+
+my $elapsed = tv_interval($start);
+
+print $logFile "creat a file: \'$logFileName\'\nunder floder: '$floder\'\n";
+print $logFile "it takes us: $elapsed seconds\n";
+
+close $logFile;
+
+print "creat and write log.txt finished!\n";
+
+
 
 
 
