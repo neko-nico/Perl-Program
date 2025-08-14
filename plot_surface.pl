@@ -5,9 +5,23 @@ use strict;
 use warnings;
 use Getopt::Long;
 use MaterialsScript qw(:all);
+use Storable qw(store);
+use Storable qw(retrieve);
+use Time::HiRes qw(gettimeofday tv_interval);
+use POSIX qw(strftime);
+
+
+my $filename_time = [gettimeofday];
+
+my $floder = 'C:/Users/Neko/Documents/Materials Studio Projects/castep_Files/Documents/';
+
+my $csvFileName = strftime("%m.%d-%H_%M_%S", localtime);
+$csvFileName = "plot_PES_1dim/${csvFileName}_data.csv";
+$csvFileName = $floder . $csvFileName;
+
 
 #--> Creat Points List
-my $points_Num = 3;
+my $points_Num = 20;
 my $r_equ = 1.5;
 
 my $iniRange = 0.8 * $r_equ * $points_Num **(1/3);
@@ -39,7 +53,7 @@ print "pointsList:\n";
 psList(\@points_List);
 
 #--> Import .xsd File
-my $doc = $Documents{"Atoms_3_Dmol.xsd"};
+my $doc = $Documents{"Atoms_20_dmol.xsd"};
 my $atoms = $doc -> Atoms;
 my $model_choose = "dmol";
 #--
@@ -60,12 +74,23 @@ my @plist_hdr = map { $_ * $h } @dr;
 my @elist = ($energy);
 my @drgrList = (dot(\@gr,\@dr));
 
-for (my $i = 0; $i < 5; $i++) {
-    @points_List = add(\@points_List, \@plist_hdr, 0);
-    ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
 
-    push @elist, $energy_mid;
-    push @drgrList, dot(\@gr_mid,\@dr);
+for (my $i = 0; $i < 10; $i++) {
+    @points_List = add(\@points_List, \@plist_hdr, 0);
+
+    eval {
+        ($energy_mid, @gr_mid) = caculateForce(\@points_List, $model_choose);
+    };
+
+    if ($@) {
+        print "Time->$i, DMol3 failed! $@\n";
+        push @elist, 0;
+        push @drgrList, 0;
+        next;
+    } else {
+        push @elist, $energy_mid;
+        push @drgrList, dot(\@gr_mid,\@dr);
+    }
 }
 
 
@@ -75,8 +100,8 @@ for (my $i = 0; $i < 5; $i++) {
 #save_two_arrays_to_csv(\@data_index, \@drgrList,
 #                        'C:\Users\25592\Documents\Materials Studio Projects\castep_Files\Documents\drgrList.csv');
 
-save_two_arrays_to_csv(\@elist, \@drgrList,
-                        'C:\Users\m\Documents\Materials Studio Projects\castep_Files\Documents\Result.csv');
+save_two_arrays_to_csv(\@elist, \@drgrList, $csvFileName);
+
 print "All finished!";
 
 
@@ -93,7 +118,7 @@ sub save_two_arrays_to_csv {
     close $fh;
 }
 
-sub caculateForce{ #doc, $atoms
+sub caculateForce{ #\@pointsList, $model
     my ($pList_ref, $module_f) = @_;
     my @pList_f = @$pList_ref;
     my @fList_f = (0) x @pList_f;
@@ -130,11 +155,20 @@ sub caculateForce{ #doc, $atoms
         print "Using DMol Modules~\n";
 
         $results = Modules->DMol3->Energy->Run($doc, Settings(
-            CalculateForces => 'Yes',
-            Quality => 'Medium', 
-            AtomCutoff => 3.3,
+            # MaxMemory => 6144, 
+            TheoryLevel => 'GGA', 
+            NonLocalFunctional => 'PBE', 
+            HybridFunctional => 'TPSSh', 
+            Basis => 'DND', 
+            BasisFile => '3.5', 
+            OrbitalCutoffQuality => 'Fine', 
+            CutoffType => 'Custom', 
+            AtomCutoff => 7, 
+            UseSmearing => 'Yes', 
+            CalculateForces => 'Yes', 
         ));
-        print "MMol finish!\n";
+        
+        print "DMol finish!\n";
 
     }else {
         print "?what?,check you input!\n";
